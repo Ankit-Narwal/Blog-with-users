@@ -1,0 +1,29 @@
+{% include "header.html" %}
+
+  <!-- Page Header -->
+  <header class="masthead" style="background-image: url({{ url_for('static', filename='img/about-bg.jpg')}})">
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="page-heading">
+            <h1>About</h1>
+            <span class="subheading">A brief description of this website</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        <p>Welcome to our corner of the internet—a space where ideas, insights, and inspiration come together. Whether you're here for expert advice, personal stories, or deep dives into topics that matter, our goal is to inform, engage, and connect. We believe in the power of thoughtful content and are committed to delivering value with every post. Thanks for being part of our journey.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  {% include "footer.html" %}
