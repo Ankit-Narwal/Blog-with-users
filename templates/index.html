@@ -1,55 +1,157 @@
 {% include "header.html" %}
 
   <!-- Page Header -->
-  <header class="masthead" style="background-image: url('https://images.unsplash.com/photo-1470092306007-055b6797ca72?ixlib=rb-1.2.1&auto=format&fit=crop&w=668&q=80')">
+  <header class="masthead" style="background-image: url('https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1400&q=80')">
     <div class="overlay"></div>
     <div class="container">
       <div class="row">
-        <div class="col-lg-8 col-md-10 mx-auto">
-          <div class="site-heading">
+        <div class="col-lg-10 col-md-11 mx-auto">
+          <div class="site-heading home-hero">
+            <span class="home-kicker">Thoughtful writing, cleaner reading</span>
             <h1>Ankit's Blog</h1>
-            <span class="subheading">A collection of random musings.</span>
+            <p class="home-hero-copy">
+              Essays, ideas, and project notes collected in one calm place. Browse recent posts,
+              jump into the featured story, and skim AI-generated TLDRs before you dive deeper.
+            </p>
+            <div class="home-hero-meta">
+              <span>{{ all_posts|length }} posts published</span>
+              <span>Built with Flask</span>
+              <span>Fresh summaries and smart tags</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-8 col-md-10 mx-auto">
-        {% for post in all_posts %}
-        <div class="post-preview">
-          <a href="{{ url_for('show_post', post_id=post.id) }}">
-            <h2 class="post-title">
-              {{post.title}}
-            </h2>
-            <h3 class="post-subtitle">
-              {{post.subtitle}}
-            </h3>
-          </a>
-          <p class="post-meta">Posted by
-            <a href="#">{{post.author.name}}</a>
-            on {{post.date}}
+  {% set featured_post = all_posts[0] if all_posts else None %}
+  {% set recent_posts = all_posts[1:] if all_posts|length > 1 else [] %}
+
+  {% if featured_post %}
+  <section class="home-feature-band">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-11 mx-auto">
+          <div class="home-section-head">
+            <div>
+              <span class="home-section-label">Featured Post</span>
+              <h2 class="home-section-title">Featured writing</h2>
+            </div>
             {% if current_user.is_authenticated and current_user.id == 1 %}
-            <a href="{{url_for('delete_post', post_id=post.id)}}">✘</a>
+            <a class="btn btn-primary home-create-btn" href="{{ url_for('add_new_post') }}">Create New Post</a>
             {% endif %}
-          </p>
-        </div>
-        <hr>
-        {% endfor %}
-
-
-        <!-- New Post -->
-        {% if user_id == 1 %}
-          <div class="clearfix">
-            <a class="btn btn-primary float-right" href="{{url_for('add_new_post')}}">Create New Post</a>
           </div>
-        {% endif %}
+
+          <article class="featured-post">
+            <div class="featured-post-body">
+              <a class="featured-post-image-link" href="{{ url_for('show_post', post_id=featured_post.id) }}">
+                <img
+                  class="featured-post-image"
+                  src="{{ featured_post.img_url }}"
+                  alt="{{ featured_post.title }}"
+                  loading="lazy"
+                  onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/edit-bg.jpg') }}';"
+                >
+              </a>
+              <p class="featured-post-meta">
+                <span>By {{ featured_post.author.name }}</span>
+                <span>{{ featured_post.date }}</span>
+              </p>
+              <a class="featured-post-link" href="{{ url_for('show_post', post_id=featured_post.id) }}">
+                <h3>{{ featured_post.title }}</h3>
+                <p class="featured-post-subtitle">{{ featured_post.subtitle }}</p>
+                {% if featured_post.summary %}
+                <p class="featured-post-summary">{{ featured_post.summary }}</p>
+                {% endif %}
+              </a>
+              <div class="home-post-footer">
+                {% if featured_post.tag_list %}
+                <div class="home-tag-row">
+                  {% for tag in featured_post.tag_list %}
+                  <span class="home-tag">{{ tag }}</span>
+                  {% endfor %}
+                </div>
+                {% endif %}
+                <div class="home-post-actions">
+                  {% if current_user.is_authenticated and current_user.id == 1 %}
+                  <a class="home-delete-link" href="{{url_for('delete_post', post_id=featured_post.id)}}">Delete</a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
       </div>
     </div>
-  </div>
-  <hr>
+  </section>
+  {% endif %}
+
+  <section class="home-posts-band">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-11 mx-auto">
+          <div class="home-section-head">
+            <div>
+              <span class="home-section-label">Recent Posts</span>
+              <h2 class="home-section-title">Latest writing</h2>
+            </div>
+          </div>
+
+          {% if recent_posts %}
+          <div class="row">
+            {% for post in recent_posts %}
+            <div class="col-lg-6 home-post-col">
+              <article class="home-post-card">
+                <a class="home-card-image-link" href="{{ url_for('show_post', post_id=post.id) }}">
+                  <img
+                    class="home-card-image"
+                    src="{{ post.img_url }}"
+                    alt="{{ post.title }}"
+                    loading="lazy"
+                    onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/edit-bg.jpg') }}';"
+                  >
+                </a>
+                <p class="home-card-meta">
+                  <span>{{ post.author.name }}</span>
+                  <span>{{ post.date }}</span>
+                </p>
+                <a class="home-card-link" href="{{ url_for('show_post', post_id=post.id) }}">
+                  <h3 class="home-card-title">{{ post.title }}</h3>
+                  <p class="home-card-subtitle">{{ post.subtitle }}</p>
+                  {% if post.summary %}
+                  <p class="home-card-summary">{{ post.summary }}</p>
+                  {% endif %}
+                </a>
+                <div class="home-post-footer">
+                  {% if post.tag_list %}
+                  <div class="home-tag-row">
+                    {% for tag in post.tag_list %}
+                    <span class="home-tag">{{ tag }}</span>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                  <div class="home-post-actions">
+                    {% if current_user.is_authenticated and current_user.id == 1 %}
+                    <a class="home-delete-link" href="{{url_for('delete_post', post_id=post.id)}}">Delete</a>
+                    {% endif %}
+                  </div>
+                </div>
+              </article>
+            </div>
+            {% endfor %}
+          </div>
+          {% elif not featured_post %}
+          <div class="home-empty-state">
+            <h3>No posts yet</h3>
+            <p>Your homepage is ready for its first article.</p>
+            {% if current_user.is_authenticated and current_user.id == 1 %}
+            <a class="btn btn-primary" href="{{ url_for('add_new_post') }}">Write the first post</a>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
 
 {% include "footer.html" %}

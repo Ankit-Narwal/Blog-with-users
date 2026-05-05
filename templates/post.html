@@ -2,61 +2,131 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
   <!-- Page Header -->
-  <header class="masthead" style="background-image: url('{{post.img_url}}')">
+  <header class="masthead" style="background-image: url('{{ post.img_url }}')">
     <div class="overlay"></div>
     <div class="container">
       <div class="row">
-        <div class="col-lg-8 col-md-10 mx-auto">
-          <div class="post-heading">
-            <h1>{{post.title}}</h1>
-            <h2 class="subheading">{{post.subtitle}}</h2>
-            <span class="meta">Posted by
-              <a href="#">{{post.author.name}}</a>
-              on {{post.date}}</span>
+        <div class="col-lg-10 col-md-11 mx-auto">
+          <div class="post-heading article-hero">
+            <span class="home-kicker">Featured article</span>
+            <h1>{{ post.title }}</h1>
+            <h2 class="subheading">{{ post.subtitle }}</h2>
+            <div class="article-hero-meta">
+              <span>By {{ post.author.name }}</span>
+              <span>{{ post.date }}</span>
+              <span>{{ comments|length }} comments</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Post Content -->
-  <article>
+  <article class="article-band">
     <div class="container">
       <div class="row">
-        <div class="col-lg-8 col-md-10 mx-auto">
-            {{ post.body|safe }}
-          <hr>
-            {% if user_id == 1:%}
-              <div class="clearfix">
-              <a class="btn btn-primary float-right" href="{{url_for('edit_post', post_id=post.id)}}">Edit Post</a>
-              </div>
-            {% endif %}
+        <div class="col-lg-10 col-md-11 mx-auto">
+          <div class="row">
+            <div class="col-lg-8">
+              <section class="article-panel article-main-panel">
+                <div class="article-main-content">
+                  {{ post.body|safe }}
+                </div>
 
-          {{ ckeditor.load() }}
-        {{ ckeditor.config(name='body') }}
-          {{ wtf.quick_form(form) }}
+                {% if current_user.is_authenticated and current_user.id == 1 %}
+                <div class="article-admin-actions">
+                  <a class="btn btn-primary" href="{{ url_for('edit_post', post_id=post.id) }}">Edit Post</a>
+                </div>
+                {% endif %}
+              </section>
 
+              <section class="article-panel article-comments-panel">
+                <div class="article-section-head">
+                  <div>
+                    <span class="home-section-label">Discussion</span>
+                    <h2 class="article-section-title">Comments</h2>
+                  </div>
+                </div>
 
+                <div class="article-comment-form">
+                  <script>
+                    window.CKEDITOR = window.CKEDITOR || {};
+                    window.CKEDITOR.config = window.CKEDITOR.config || {};
+                    window.CKEDITOR.config.versionCheck = false;
+                    window.CKEDITOR.config.removePlugins = window.CKEDITOR.config.removePlugins
+                      ? window.CKEDITOR.config.removePlugins + ',versioncheck'
+                      : 'versioncheck';
+                  </script>
+                  {{ ckeditor.load() }}
+                  {{ ckeditor.config(name='body', versionCheck=false, removePlugins='versioncheck') }}
+                  {{ wtf.quick_form(form) }}
+                </div>
 
-<!--           Comments Area -->
-          <div class="col-lg-8 col-md-10 mx-auto comment">
-              <ul class="commentList">
-                {% for x in comments: %}
-                <li>
-                    <div class="commenterImage">
-                      <img src={{x.author_id | gravatar}}>
+                {% if comments %}
+                <div class="article-comment-list">
+                  {% for x in comments %}
+                  <article class="article-comment-card">
+                    <div class="article-comment-avatar">
+                      <img src="{{ x.author_id | gravatar }}" alt="{{ x.author_id }}">
                     </div>
-                    <div class="commentText">
-                      <p>{{x.text | safe}}</p>
-                      <span class="date sub-text">{{x.author_id}}</span>
+                    <div class="article-comment-body">
+                      <div class="article-comment-head">
+                        <h3>{{ x.author_id }}</h3>
+                        <span>Reader comment</span>
+                      </div>
+                      <div class="article-comment-copy">{{ x.text | safe }}</div>
                     </div>
-                </li>
-                {% endfor %}
-              </ul>
+                  </article>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <div class="home-empty-state article-empty-comments">
+                  <h3>No comments yet</h3>
+                  <p>Start the conversation by leaving the first reply.</p>
+                </div>
+                {% endif %}
+              </section>
             </div>
 
+            <div class="col-lg-4">
+              {% if post.summary %}
+              <section class="article-panel article-side-panel">
+                <span class="home-section-label">Quick read</span>
+                <h2 class="article-section-title">TLDR</h2>
+                <p class="article-summary-copy">{{ post.summary }}</p>
+              </section>
+              {% endif %}
 
+              {% if post.tag_list %}
+              <section class="article-panel article-side-panel">
+                <span class="home-section-label">Topics</span>
+                <h2 class="article-section-title">Tags</h2>
+                <div class="home-tag-row article-tag-row">
+                  {% for tag in post.tag_list %}
+                  <span class="home-tag">{{ tag }}</span>
+                  {% endfor %}
+                </div>
+              </section>
+              {% endif %}
+
+              <section class="article-panel article-side-panel">
+                <span class="home-section-label">Post details</span>
+                <h2 class="article-section-title">Overview</h2>
+                <div class="article-fact-list">
+                  <div class="article-fact-item">
+                    <p><span class="article-fact-label">Author:</span> {{ post.author.name }}</p>
+                  </div>
+                  <div class="article-fact-item">
+                    <p><span class="article-fact-label">Published:</span> {{ post.date }}</p>
+                  </div>
+                  <div class="article-fact-item">
+                    <p><span class="article-fact-label">Comments:</span> {{ comments|length }}</p>
+                  </div>
+                </div>
+              </section>
+            </div>
           </div>
+        </div>
       </div>
     </div>
   </article>

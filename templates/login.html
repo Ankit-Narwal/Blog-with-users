@@ -9,28 +9,92 @@
     <div class="overlay"></div>
     <div class="container">
       <div class="row">
-        <div class="col-lg-8 col-md-10 mx-auto">
-          <div class="page-heading">
-            <h1>Log In</h1>
-            <span class="subheading">Welcome Back!</span>
+        <div class="col-lg-10 col-md-11 mx-auto">
+          <div class="page-heading auth-hero">
+            <span class="home-kicker">Member access</span>
+            <h1>Log in</h1>
+            <p class="auth-hero-copy">
+              Pick up where you left off, join the discussion, and manage your reading and publishing flow from one account.
+            </p>
           </div>
         </div>
       </div>
     </div>
   </header>
 
-  <div class="container">
-    <div class="row">
+  <section class="auth-band">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-11 mx-auto">
+          <div class="row">
+            <div class="col-lg-5">
+              <section class="auth-panel auth-info-panel">
+                <span class="home-section-label">Why log in</span>
+                <h2 class="auth-panel-title">Stay connected to the blog</h2>
+                <div class="about-highlight-list">
+                  <article class="about-highlight-item">
+                    <h3>Join the conversation</h3>
+                    <p>Comment on articles and engage with the ideas behind each post.</p>
+                  </article>
+                  <article class="about-highlight-item">
+                    <h3>Keep your session active</h3>
+                    <p>Move between pages without re-entering your details every time.</p>
+                  </article>
+                  <article class="about-highlight-item">
+                    <h3>Admin tools when needed</h3>
+                    <p>Authorized users can manage content, review activity, and publish updates.</p>
+                  </article>
+                </div>
+              </section>
+            </div>
 
-      <div class="col-lg-8 col-md-10 mx-auto content">
-          {% if error: %}
-          <p>{{error}}</p>
-          {% endif %}
-        {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+            <div class="col-lg-7">
+              <section class="auth-panel auth-form-panel">
+                {% if already_logged_in %}
+                <span class="home-section-label">Account status</span>
+                <h2 class="auth-panel-title">You are already logged in</h2>
+                <p class="auth-panel-copy">
+                  Your account is active, so there is nothing else you need to do here right now.
+                </p>
+                <div class="dashboard-actions">
+                  <a class="btn btn-primary" href="{{ url_for('get_all_posts') }}">Go to Homepage</a>
+                  {% if current_user.id == 1 %}
+                  <a class="btn btn-outline-secondary dashboard-link-btn" href="{{ url_for('admin_dashboard') }}">Open Dashboard</a>
+                  {% endif %}
+                </div>
+                {% else %}
+                <span class="home-section-label">Welcome back</span>
+                <h2 class="auth-panel-title">Sign in to continue</h2>
+                <p class="auth-panel-copy">
+                  Enter your email and password to access your account and continue reading or managing content.
+                </p>
+                {% if message %}
+                <div class="auth-success">
+                  {{ message }}
+                </div>
+                {% endif %}
+                {% if error %}
+                <div class="auth-alert">
+                  {{ error }}
+                </div>
+                {% endif %}
+                <div class="auth-form-wrap">
+                  {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+                </div>
+                <p class="auth-footnote">
+                  New here? <a href="{{ url_for('register') }}">Create an account</a>.
+                </p>
+                <p class="auth-footnote">
+                  Forgot your password? <a href="{{ url_for('forgot_password') }}">Reset it with OTP</a>.
+                </p>
+                {% endif %}
+              </section>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-
+  </section>
 
 {% include "footer.html" %}
 {% endblock %}

@@ -25,9 +25,30 @@
   <div class="container">
     <div class="row">
       <div class="col-lg-8 col-md-10 mx-auto">
+        <div class="auth-panel auth-form-panel">
+        <span class="home-section-label">AI writing tools</span>
+        <h2 class="auth-panel-title">{% if is_edit %}Refine your post{% else %}Build your draft{% endif %}</h2>
+        <p class="auth-panel-copy">
+          Enter a topic to have Gemini draft a full article, or fill the article yourself and use AI to generate the title,
+          TLDR, and tags before saving.
+        </p>
+        {% if ai_message %}
+        <div class="alert alert-info" role="alert">
+          {{ ai_message }}
+        </div>
+        {% endif %}
+        <script>
+          window.CKEDITOR = window.CKEDITOR || {};
+          window.CKEDITOR.config = window.CKEDITOR.config || {};
+          window.CKEDITOR.config.versionCheck = false;
+          window.CKEDITOR.config.removePlugins = window.CKEDITOR.config.removePlugins
+            ? window.CKEDITOR.config.removePlugins + ',versioncheck'
+            : 'versioncheck';
+        </script>
         {{ ckeditor.load() }}
-        {{ ckeditor.config(name='body') }}
-        {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+        {{ ckeditor.config(name='body', versionCheck=false, removePlugins='versioncheck') }}
+        {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary", "generate_ai": "secondary", "generate_draft": "secondary"}) }}
+        </div>
       </div>
     </div>
   </div>

@@ -19,7 +19,7 @@
   <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
 
   <!-- Custom styles for this template -->
-  <link href="{{ url_for('static', filename='css/clean-blog.min.css')}}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/clean-blog.css')}}" rel="stylesheet">
 
 </head>
 
@@ -46,6 +46,11 @@
               <a class="nav-link" href="{{ url_for('register') }}">Register</a>
             </li>
           {% else %}
+            {% if current_user.id == 1 %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            </li>
+            {% endif %}
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('logout') }}">Log Out</a>
             </li>
