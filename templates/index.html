@@ -1,22 +1,21 @@
 {% include "header.html" %}
 
-  <!-- Page Header -->
   <header class="masthead" style="background-image: url('https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1400&q=80')">
     <div class="overlay"></div>
     <div class="container">
       <div class="row">
-        <div class="col-lg-10 col-md-11 mx-auto">
+        <div class="col-lg-12 mx-auto">
           <div class="site-heading home-hero">
-            <span class="home-kicker">Thoughtful writing, cleaner reading</span>
+            <span class="home-kicker">AI-powered stories, cleaner reading</span>
             <h1>Ankit's Blog</h1>
             <p class="home-hero-copy">
-              Essays, ideas, and project notes collected in one calm place. Browse recent posts,
-              jump into the featured story, and skim AI-generated TLDRs before you dive deeper.
+              Essays, ideas, and project notes collected in one calm place. Browse featured stories, see what is trending,
+              save what matters, listen hands-free, and dip into AI-assisted summaries only when you want them.
             </p>
             <div class="home-hero-meta">
-              <span>{{ all_posts|length }} posts published</span>
-              <span>Built with Flask</span>
-              <span>Fresh summaries and smart tags</span>
+              <span>{{ all_posts|length }} published posts</span>
+              <span>AI-powered reader tools</span>
+              <span>Reactions, bookmarks, and profiles</span>
             </div>
           </div>
         </div>
@@ -24,62 +23,107 @@
     </div>
   </header>
 
-  {% set featured_post = all_posts[0] if all_posts else None %}
-  {% set recent_posts = all_posts[1:] if all_posts|length > 1 else [] %}
+  {% macro post_meta(post) -%}
+    <p class="home-card-meta">
+      <span>{{ post.author.name }}</span>
+      <span>{{ post.date }}</span>
+      <span>⏱ {{ post.reading_time }} min read</span>
+      <span>👁 <span class="js-view-counter" data-target="{{ post.views }}">0</span> views</span>
+    </p>
+  {%- endmacro %}
 
-  {% if featured_post %}
+  {% macro post_card(post) -%}
+    <article class="home-post-card">
+      <a class="home-card-image-link" href="{{ url_for('show_post', post_id=post.id) }}">
+        <img
+          class="home-card-image"
+          src="{{ post.img_url }}"
+          alt="{{ post.title }}"
+          loading="lazy"
+          onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/edit-bg.jpg') }}';"
+        >
+      </a>
+      <a class="home-card-link" href="{{ url_for('show_post', post_id=post.id) }}">
+        <h3 class="home-card-title">{{ post.title }}</h3>
+      </a>
+      <p class="home-card-meta-line">
+        <span class="home-meta-pill"><span aria-hidden="true">⏱</span> {{ post.reading_time }} min read</span>
+        <span class="home-meta-pill"><span aria-hidden="true">👁</span> <span class="js-view-counter" data-target="{{ post.views }}">0</span> views</span>
+      </p>
+    </article>
+  {%- endmacro %}
+
+  {% if featured_posts %}
   <section class="home-feature-band">
     <div class="container">
       <div class="row">
-        <div class="col-lg-10 col-md-11 mx-auto">
+        <div class="col-lg-12 mx-auto">
           <div class="home-section-head">
             <div>
-              <span class="home-section-label">Featured Post</span>
-              <h2 class="home-section-title">Featured writing</h2>
+              <span class="home-section-label">Featured</span>
+              <h2 class="home-section-title">Editor highlights</h2>
             </div>
-            {% if current_user.is_authenticated and current_user.id == 1 %}
+            {% if is_admin_user %}
             <a class="btn btn-primary home-create-btn" href="{{ url_for('add_new_post') }}">Create New Post</a>
             {% endif %}
           </div>
 
-          <article class="featured-post">
-            <div class="featured-post-body">
-              <a class="featured-post-image-link" href="{{ url_for('show_post', post_id=featured_post.id) }}">
-                <img
-                  class="featured-post-image"
-                  src="{{ featured_post.img_url }}"
-                  alt="{{ featured_post.title }}"
-                  loading="lazy"
-                  onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/edit-bg.jpg') }}';"
-                >
-              </a>
-              <p class="featured-post-meta">
-                <span>By {{ featured_post.author.name }}</span>
-                <span>{{ featured_post.date }}</span>
-              </p>
-              <a class="featured-post-link" href="{{ url_for('show_post', post_id=featured_post.id) }}">
-                <h3>{{ featured_post.title }}</h3>
-                <p class="featured-post-subtitle">{{ featured_post.subtitle }}</p>
-                {% if featured_post.summary %}
-                <p class="featured-post-summary">{{ featured_post.summary }}</p>
-                {% endif %}
-              </a>
-              <div class="home-post-footer">
-                {% if featured_post.tag_list %}
-                <div class="home-tag-row">
-                  {% for tag in featured_post.tag_list %}
-                  <span class="home-tag">{{ tag }}</span>
-                  {% endfor %}
-                </div>
-                {% endif %}
-                <div class="home-post-actions">
-                  {% if current_user.is_authenticated and current_user.id == 1 %}
-                  <a class="home-delete-link" href="{{url_for('delete_post', post_id=featured_post.id)}}">Delete</a>
-                  {% endif %}
-                </div>
+          <div id="featuredPostsCarousel" class="carousel slide home-carousel" data-ride="carousel">
+            <ol class="carousel-indicators">
+              {% for post in featured_posts %}
+              <li data-target="#featuredPostsCarousel" data-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}"></li>
+              {% endfor %}
+            </ol>
+            <div class="carousel-inner">
+              {% for post in featured_posts %}
+              <div class="carousel-item {% if loop.first %}active{% endif %}">
+                <article class="featured-post featured-post-compact">
+                  <div class="featured-post-body">
+                    <div class="featured-post-content">
+                      {{ post_meta(post) }}
+                      <a class="featured-post-link" href="{{ url_for('show_post', post_id=post.id) }}">
+                        <h3>{{ post.title }}</h3>
+                        <p class="featured-post-subtitle">{{ post.subtitle }}</p>
+                        {% if post.summary %}
+                        <p class="featured-post-summary">{{ post.summary }}</p>
+                        {% endif %}
+                      </a>
+                      <div class="home-post-footer">
+                        <div class="home-tag-row">
+                          {% for tag in post.tag_list[:4] %}
+                          <span class="home-tag">{{ tag }}</span>
+                          {% endfor %}
+                        </div>
+                        <div class="home-post-actions">
+                          <span>{{ post.like_count }} likes</span>
+                          <span>{{ post.dislike_count }} dislikes</span>
+                          <span>{{ post.bookmark_count }} saves</span>
+                        </div>
+                      </div>
+                    </div>
+                    <a class="featured-post-image-link" href="{{ url_for('show_post', post_id=post.id) }}">
+                      <img
+                        class="featured-post-image"
+                        src="{{ post.img_url }}"
+                        alt="{{ post.title }}"
+                        loading="lazy"
+                        onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/edit-bg.jpg') }}';"
+                      >
+                    </a>
+                  </div>
+                </article>
               </div>
+              {% endfor %}
             </div>
-          </article>
+            <a class="carousel-control-prev" href="#featuredPostsCarousel" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">Previous</span>
+            </a>
+            <a class="carousel-control-next" href="#featuredPostsCarousel" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">Next</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -89,62 +133,94 @@
   <section class="home-posts-band">
     <div class="container">
       <div class="row">
-        <div class="col-lg-10 col-md-11 mx-auto">
-          <div class="home-section-head">
-            <div>
-              <span class="home-section-label">Recent Posts</span>
-              <h2 class="home-section-title">Latest writing</h2>
+        <div class="col-lg-12 mx-auto">
+          <div class="row">
+            <div class="col-lg-9">
+              {% if search_query %}
+              <div class="home-section-head">
+                <div>
+                  <span class="home-section-label">Search</span>
+                  <h2 class="home-section-title">Results for "{{ search_query }}"</h2>
+                </div>
+              </div>
+              <div class="row">
+                {% for post in search_results %}
+                <div class="col-lg-4 col-md-6 home-post-col">
+                  {{ post_card(post) }}
+                </div>
+                {% endfor %}
+              </div>
+              {% if not search_results %}
+              <div class="home-empty-state">
+                <h3>No matches found</h3>
+                <p>Try a different keyword for title, subtitle, body, or tags.</p>
+              </div>
+              {% endif %}
+              {% endif %}
+
+              <div class="home-section-head">
+                <div>
+                  <span class="home-section-label">Trending</span>
+                  <h2 class="home-section-title">What readers are engaging with</h2>
+                </div>
+              </div>
+              <div class="row">
+                {% for post in trending_posts %}
+                <div class="col-lg-4 col-md-6 home-post-col">
+                  {{ post_card(post) }}
+                </div>
+                {% endfor %}
+              </div>
+
+              <div class="home-section-head">
+                <div>
+                  <span class="home-section-label">Latest</span>
+                  <h2 class="home-section-title">Freshly published</h2>
+                </div>
+              </div>
+              <div class="row">
+                {% for post in latest_posts %}
+                <div class="col-lg-4 col-md-6 home-post-col">
+                  {{ post_card(post) }}
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="col-lg-3">
+              <section class="home-side-panel">
+                <span class="home-section-label">Recommended</span>
+                <h2 class="home-section-title home-side-title">Based on what is resonating</h2>
+                <div class="home-recommend-list">
+                  {% for post in recommended_posts %}
+                  <article class="home-recommend-item">
+                    <a class="home-recommend-link" href="{{ url_for('show_post', post_id=post.id) }}">
+                      <h3>{{ post.title }}</h3>
+                      <p>{{ post.reading_time }} min read &middot; {{ post.views }} views</p>
+                    </a>
+                  </article>
+                  {% endfor %}
+                </div>
+              </section>
+
+              {% if current_user.is_authenticated %}
+              <section class="home-side-panel">
+                <span class="home-section-label">Your space</span>
+                <h2 class="home-section-title home-side-title">Reader tools</h2>
+                <div class="home-reader-links">
+                  <a class="dashboard-inline-link" href="{{ url_for('saved_articles') }}">My Saved Articles</a>
+                  <a class="dashboard-inline-link" href="{{ url_for('profile') }}">Profile and activity</a>
+                </div>
+              </section>
+              {% endif %}
             </div>
           </div>
 
-          {% if recent_posts %}
-          <div class="row">
-            {% for post in recent_posts %}
-            <div class="col-lg-6 home-post-col">
-              <article class="home-post-card">
-                <a class="home-card-image-link" href="{{ url_for('show_post', post_id=post.id) }}">
-                  <img
-                    class="home-card-image"
-                    src="{{ post.img_url }}"
-                    alt="{{ post.title }}"
-                    loading="lazy"
-                    onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/edit-bg.jpg') }}';"
-                  >
-                </a>
-                <p class="home-card-meta">
-                  <span>{{ post.author.name }}</span>
-                  <span>{{ post.date }}</span>
-                </p>
-                <a class="home-card-link" href="{{ url_for('show_post', post_id=post.id) }}">
-                  <h3 class="home-card-title">{{ post.title }}</h3>
-                  <p class="home-card-subtitle">{{ post.subtitle }}</p>
-                  {% if post.summary %}
-                  <p class="home-card-summary">{{ post.summary }}</p>
-                  {% endif %}
-                </a>
-                <div class="home-post-footer">
-                  {% if post.tag_list %}
-                  <div class="home-tag-row">
-                    {% for tag in post.tag_list %}
-                    <span class="home-tag">{{ tag }}</span>
-                    {% endfor %}
-                  </div>
-                  {% endif %}
-                  <div class="home-post-actions">
-                    {% if current_user.is_authenticated and current_user.id == 1 %}
-                    <a class="home-delete-link" href="{{url_for('delete_post', post_id=post.id)}}">Delete</a>
-                    {% endif %}
-                  </div>
-                </div>
-              </article>
-            </div>
-            {% endfor %}
-          </div>
-          {% elif not featured_post %}
+          {% if not all_posts %}
           <div class="home-empty-state">
             <h3>No posts yet</h3>
             <p>Your homepage is ready for its first article.</p>
-            {% if current_user.is_authenticated and current_user.id == 1 %}
+            {% if is_admin_user %}
             <a class="btn btn-primary" href="{{ url_for('add_new_post') }}">Write the first post</a>
             {% endif %}
           </div>
@@ -155,3 +231,34 @@
   </section>
 
 {% include "footer.html" %}
+<script>
+  (function() {
+    function abbreviateViews(value) {
+      var num = Number(value) || 0;
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(num >= 10000000 ? 0 : 1).replace('.0', '') + 'M';
+      }
+      if (num >= 1000) {
+        return (num / 1000).toFixed(num >= 10000 ? 0 : 1).replace('.0', '') + 'K';
+      }
+      return String(num);
+    }
+
+    document.querySelectorAll('.js-view-counter').forEach(function(el) {
+      var target = Number(el.getAttribute('data-target') || 0);
+      var start = performance.now();
+      var duration = 800;
+      function tick(now) {
+        var progress = Math.min(1, (now - start) / duration);
+        var current = Math.round(target * progress);
+        el.textContent = abbreviateViews(current);
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          el.textContent = abbreviateViews(target);
+        }
+      }
+      requestAnimationFrame(tick);
+    });
+  })();
+</script>

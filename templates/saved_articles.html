@@ -1,0 +1,54 @@
+{% include "header.html" %}
+
+  <header class="masthead" style="background-image: url('https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1400&q=80')">
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-11 mx-auto">
+          <div class="page-heading dashboard-hero">
+            <span class="home-kicker">Reading list</span>
+            <h1>My Saved Articles</h1>
+            <p class="dashboard-hero-copy">Everything you bookmarked for later is waiting here.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="dashboard-band">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-11 mx-auto">
+          {% if saved_posts %}
+          <div class="row">
+            {% for post in saved_posts %}
+            <div class="col-lg-6 home-post-col">
+              <article class="home-post-card">
+                <a class="home-card-image-link" href="{{ url_for('show_post', post_id=post.id) }}">
+                  <img class="home-card-image" src="{{ post.img_url }}" alt="{{ post.title }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/edit-bg.jpg') }}';">
+                </a>
+                <p class="home-card-meta">
+                  <span>{{ post.author.name }}</span>
+                  <span>{{ post.date }}</span>
+                  <span>{{ post.reading_time }} min read</span>
+                </p>
+                <a class="home-card-link" href="{{ url_for('show_post', post_id=post.id) }}">
+                  <h3 class="home-card-title">{{ post.title }}</h3>
+                  <p class="home-card-subtitle">{{ post.subtitle }}</p>
+                </a>
+              </article>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="home-empty-state">
+            <h3>No saved articles yet</h3>
+            <p>Start saving posts from the article page and they will show up here.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+{% include "footer.html" %}

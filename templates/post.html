@@ -1,12 +1,14 @@
 {% include "header.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
+  <div class="article-progress-wrap" aria-hidden="true">
+    <div id="article-progress-bar" class="article-progress-bar"></div>
+  </div>
 
-  <!-- Page Header -->
   <header class="masthead" style="background-image: url('{{ post.img_url }}')">
     <div class="overlay"></div>
     <div class="container">
       <div class="row">
-        <div class="col-lg-10 col-md-11 mx-auto">
+        <div class="col-lg-12 mx-auto">
           <div class="post-heading article-hero">
             <span class="home-kicker">Featured article</span>
             <h1>{{ post.title }}</h1>
@@ -14,7 +16,9 @@
             <div class="article-hero-meta">
               <span>By {{ post.author.name }}</span>
               <span>{{ post.date }}</span>
-              <span>{{ comments|length }} comments</span>
+              <span>{{ post.reading_time }} min read</span>
+              <span>{{ post.listening_time }} min listen</span>
+              <span><span id="article-comment-count">{{ comments|length }}</span> comments</span>
             </div>
           </div>
         </div>
@@ -25,19 +29,65 @@
   <article class="article-band">
     <div class="container">
       <div class="row">
-        <div class="col-lg-10 col-md-11 mx-auto">
+        <div class="col-lg-12 mx-auto">
           <div class="row">
-            <div class="col-lg-8">
+            <div class="col-lg-9">
               <section class="article-panel article-main-panel">
+                <div class="article-audio-panel" data-article-reader>
+                  <div>
+                    <span class="home-section-label">AI-powered audio</span>
+                    <h2 class="article-audio-title">Listen to this article</h2>
+                    <p class="article-audio-meta">~{{ post.listening_time }} min listen</p>
+                  </div>
+                  <div class="article-audio-actions">
+                    <button class="article-audio-button" type="button" data-reader-action="play">
+                      <i class="fas fa-play" aria-hidden="true"></i>
+                      <span>Listen</span>
+                    </button>
+                    <button class="article-audio-button" type="button" data-reader-action="pause">
+                      <i class="fas fa-pause" aria-hidden="true"></i>
+                      <span>Pause</span>
+                    </button>
+                    <button class="article-audio-button" type="button" data-reader-action="stop">
+                      <i class="fas fa-stop" aria-hidden="true"></i>
+                      <span>Stop</span>
+                    </button>
+                  </div>
+                  <p class="article-inline-status" id="reader-status" aria-live="polite"></p>
+                </div>
+
+                <div class="article-engagement-bar article-engagement-top">
+                  <form class="js-article-action-form" method="post" action="{{ url_for('react_post', post_id=post.id, action='like') }}">
+                    <button class="article-action-button {% if current_reaction == 1 %}is-active{% endif %}" data-action="like" type="submit" aria-label="Like article">
+                      <i class="fas fa-thumbs-up" aria-hidden="true"></i>
+                      <span data-count="like">{{ post.like_count }}</span>
+                    </button>
+                  </form>
+                  <form class="js-article-action-form" method="post" action="{{ url_for('react_post', post_id=post.id, action='dislike') }}">
+                    <button class="article-action-button {% if current_reaction == -1 %}is-active{% endif %}" data-action="dislike" type="submit" aria-label="Dislike article">
+                      <i class="fas fa-thumbs-down" aria-hidden="true"></i>
+                      <span data-count="dislike">{{ post.dislike_count }}</span>
+                    </button>
+                  </form>
+                  <form class="js-article-action-form" method="post" action="{{ url_for('bookmark_post', post_id=post.id) }}">
+                    <button class="article-action-button {% if is_bookmarked %}is-active{% endif %}" data-action="bookmark" type="submit" aria-label="{% if is_bookmarked %}Unsave article{% else %}Save article{% endif %}">
+                      <i class="{% if is_bookmarked %}fas{% else %}far{% endif %} fa-bookmark" aria-hidden="true"></i>
+                      <span data-count="bookmark">{{ post.bookmark_count }}</span>
+                    </button>
+                  </form>
+                </div>
+                <p class="article-inline-status article-action-status" id="article-action-status" aria-live="polite"></p>
+
                 <div class="article-main-content">
                   {{ post.body|safe }}
                 </div>
 
-                {% if current_user.is_authenticated and current_user.id == 1 %}
                 <div class="article-admin-actions">
+                  <a class="btn btn-outline-primary" href="{{ url_for('export_post_pdf', post_id=post.id) }}">Download PDF</a>
+                  {% if is_admin_user %}
                   <a class="btn btn-primary" href="{{ url_for('edit_post', post_id=post.id) }}">Edit Post</a>
+                  {% endif %}
                 </div>
-                {% endif %}
               </section>
 
               <section class="article-panel article-comments-panel">
@@ -45,6 +95,14 @@
                   <div>
                     <span class="home-section-label">Discussion</span>
                     <h2 class="article-section-title">Comments</h2>
+                  </div>
+                  <div class="article-comment-sort">
+                    <label for="comment-sort">Sort by</label>
+                    <select id="comment-sort" class="form-control form-control-sm">
+                      <option value="relevant" {% if comment_sort == 'relevant' %}selected{% endif %}>Most relevant</option>
+                      <option value="newest" {% if comment_sort == 'newest' %}selected{% endif %}>Newest</option>
+                      <option value="oldest" {% if comment_sort == 'oldest' %}selected{% endif %}>Oldest</option>
+                    </select>
                   </div>
                 </div>
 
@@ -60,40 +118,52 @@
                   {{ ckeditor.load() }}
                   {{ ckeditor.config(name='body', versionCheck=false, removePlugins='versioncheck') }}
                   {{ wtf.quick_form(form) }}
+                  <p class="article-inline-status" id="comment-status" aria-live="polite"></p>
                 </div>
 
-                {% if comments %}
-                <div class="article-comment-list">
+                <div class="article-comment-list" id="article-comment-list">
                   {% for x in comments %}
-                  <article class="article-comment-card">
-                    <div class="article-comment-avatar">
-                      <img src="{{ x.author_id | gravatar }}" alt="{{ x.author_id }}">
-                    </div>
-                    <div class="article-comment-body">
-                      <div class="article-comment-head">
-                        <h3>{{ x.author_id }}</h3>
-                        <span>Reader comment</span>
-                      </div>
-                      <div class="article-comment-copy">{{ x.text | safe }}</div>
-                    </div>
-                  </article>
+                  {% include "_comment_card.html" %}
                   {% endfor %}
                 </div>
-                {% else %}
-                <div class="home-empty-state article-empty-comments">
+                <div class="home-empty-state article-empty-comments {% if comments %}is-hidden{% endif %}" id="article-empty-comments">
                   <h3>No comments yet</h3>
                   <p>Start the conversation by leaving the first reply.</p>
                 </div>
-                {% endif %}
               </section>
+
+              {% if suggested_posts %}
+              <section class="article-panel article-suggestions-panel">
+                <div class="article-section-head">
+                  <div>
+                    <span class="home-section-label">You may also like</span>
+                    <h2 class="article-section-title">More stories to read next</h2>
+                  </div>
+                </div>
+                <div class="article-suggestion-grid">
+                  {% for suggested in suggested_posts %}
+                  <article class="article-suggestion-card">
+                    <a class="article-suggestion-link" href="{{ url_for('show_post', post_id=suggested.id) }}">
+                      <span>{{ suggested.reading_time }} min read</span>
+                      <h3>{{ suggested.title }}</h3>
+                      <p>{{ suggested.subtitle }}</p>
+                    </a>
+                  </article>
+                  {% endfor %}
+                </div>
+              </section>
+              {% endif %}
             </div>
 
-            <div class="col-lg-4">
+            <div class="col-lg-3">
               {% if post.summary %}
               <section class="article-panel article-side-panel">
                 <span class="home-section-label">Quick read</span>
                 <h2 class="article-section-title">TLDR</h2>
-                <p class="article-summary-copy">{{ post.summary }}</p>
+                <details class="article-summary-toggle">
+                  <summary>Show TLDR</summary>
+                  <p class="article-summary-copy">{{ post.summary }}</p>
+                </details>
               </section>
               {% endif %}
 
@@ -120,7 +190,13 @@
                     <p><span class="article-fact-label">Published:</span> {{ post.date }}</p>
                   </div>
                   <div class="article-fact-item">
-                    <p><span class="article-fact-label">Comments:</span> {{ comments|length }}</p>
+                    <p><span class="article-fact-label">Reading time:</span> {{ post.reading_time }} min read</p>
+                  </div>
+                  <div class="article-fact-item">
+                    <p><span class="article-fact-label">Listening time:</span> {{ post.listening_time }} min listen</p>
+                  </div>
+                  <div class="article-fact-item">
+                    <p><span class="article-fact-label">Views:</span> {{ post.views }}</p>
                   </div>
                 </div>
               </section>
@@ -132,4 +208,228 @@
   </article>
 
   <hr>
+  <script>
+    (function() {
+      function parseJsonResponse(response) {
+        return response.json().then(function(payload) {
+          if (!response.ok) {
+            var message = payload && payload.message ? payload.message : 'Something went wrong. Please try again.';
+            throw new Error(message);
+          }
+          return payload;
+        });
+      }
+
+      function postForm(form) {
+        return fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'same-origin'
+        }).then(parseJsonResponse);
+      }
+
+      function setActionBusy(button, isBusy) {
+        if (!button) {
+          return;
+        }
+        button.disabled = isBusy;
+        button.classList.toggle('is-loading', isBusy);
+      }
+
+      function plainArticleText() {
+        var title = document.querySelector('.article-hero h1');
+        var subtitle = document.querySelector('.article-hero .subheading');
+        var body = document.querySelector('.article-main-content');
+        return [
+          title ? title.textContent : '',
+          subtitle ? subtitle.textContent : '',
+          body ? body.textContent : ''
+        ].join('. ').replace(/\s+/g, ' ').trim();
+      }
+
+      var reader = document.querySelector('[data-article-reader]');
+      var progressBar = document.getElementById('article-progress-bar');
+      function updateReadingProgress() {
+        if (!progressBar) {
+          return;
+        }
+        var scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+        var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        var ratio = docHeight > 0 ? Math.min(1, Math.max(0, scrollTop / docHeight)) : 0;
+        progressBar.style.width = (ratio * 100).toFixed(1) + '%';
+      }
+      window.addEventListener('scroll', updateReadingProgress, { passive: true });
+      updateReadingProgress();
+      if (reader) {
+        var readerStatus = document.getElementById('reader-status');
+        var supported = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+        function setReaderStatus(message, isError) {
+          if (!readerStatus) {
+            return;
+          }
+          readerStatus.textContent = message || '';
+          readerStatus.classList.toggle('is-error', !!isError);
+        }
+        reader.addEventListener('click', function(event) {
+          var button = event.target.closest('[data-reader-action]');
+          if (!button) {
+            return;
+          }
+          if (!supported) {
+            setReaderStatus('Audio reading is not supported in this browser.', true);
+            return;
+          }
+          var action = button.getAttribute('data-reader-action');
+          if (action === 'play') {
+            if (window.speechSynthesis.paused) {
+              window.speechSynthesis.resume();
+              setReaderStatus('Reading resumed.');
+              return;
+            }
+            window.speechSynthesis.cancel();
+            var utterance = new SpeechSynthesisUtterance(plainArticleText());
+            utterance.rate = 0.95;
+            utterance.onstart = function() {
+              setReaderStatus('AI-powered local reader is playing.');
+            };
+            utterance.onend = function() {
+              setReaderStatus('Finished reading.');
+            };
+            window.speechSynthesis.speak(utterance);
+          }
+          if (action === 'pause') {
+            window.speechSynthesis.pause();
+            setReaderStatus('Reading paused.');
+          }
+          if (action === 'stop') {
+            window.speechSynthesis.cancel();
+            setReaderStatus('Reading stopped.');
+          }
+        });
+      }
+
+      document.querySelectorAll('.js-article-action-form').forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+          event.preventDefault();
+          var button = form.querySelector('.article-action-button');
+          setActionBusy(button, true);
+          var status = document.getElementById('article-action-status');
+          if (status) {
+            status.textContent = '';
+            status.classList.remove('is-error');
+          }
+          postForm(form).then(function(payload) {
+            var counts = payload.counts || {};
+            var likeCount = document.querySelector('[data-count="like"]');
+            var dislikeCount = document.querySelector('[data-count="dislike"]');
+            var bookmarkCount = document.querySelector('[data-count="bookmark"]');
+            if (likeCount) {
+              likeCount.textContent = counts.likes;
+            }
+            if (dislikeCount) {
+              dislikeCount.textContent = counts.dislikes;
+            }
+            if (bookmarkCount) {
+              bookmarkCount.textContent = counts.bookmarks;
+            }
+
+            document.querySelectorAll('.article-action-button[data-action="like"], .article-action-button[data-action="dislike"]').forEach(function(actionButton) {
+              actionButton.classList.remove('is-active');
+            });
+            if (payload.currentReaction === 1) {
+              document.querySelector('.article-action-button[data-action="like"]').classList.add('is-active');
+            }
+            if (payload.currentReaction === -1) {
+              document.querySelector('.article-action-button[data-action="dislike"]').classList.add('is-active');
+            }
+
+            var bookmarkButton = document.querySelector('.article-action-button[data-action="bookmark"]');
+            if (bookmarkButton) {
+              bookmarkButton.classList.toggle('is-active', !!payload.isBookmarked);
+              bookmarkButton.setAttribute('aria-label', payload.isBookmarked ? 'Unsave article' : 'Save article');
+              var icon = bookmarkButton.querySelector('.fa-bookmark');
+              if (icon) {
+                icon.classList.toggle('fas', !!payload.isBookmarked);
+                icon.classList.toggle('far', !payload.isBookmarked);
+              }
+            }
+          }).catch(function(error) {
+            var status = document.getElementById('article-action-status');
+            if (status) {
+              status.textContent = error.message || 'Could not update this action.';
+              status.classList.add('is-error');
+            }
+          }).finally(function() {
+            setActionBusy(button, false);
+          });
+        });
+      });
+
+      var commentWrap = document.querySelector('.article-comment-form');
+      var commentForm = commentWrap ? commentWrap.querySelector('form') : null;
+      var commentStatus = document.getElementById('comment-status');
+      if (commentForm) {
+        commentForm.addEventListener('submit', function(event) {
+          event.preventDefault();
+          if (window.CKEDITOR && window.CKEDITOR.instances && window.CKEDITOR.instances.comment) {
+            window.CKEDITOR.instances.comment.updateElement();
+          }
+          var submitButton = commentForm.querySelector('[type="submit"]');
+          setActionBusy(submitButton, true);
+          if (commentStatus) {
+            commentStatus.innerHTML = 'AI is checking your comment<span class="typing-dots"><span></span><span></span><span></span></span>';
+            commentStatus.classList.remove('is-error');
+          }
+          postForm(commentForm).then(function(payload) {
+            var list = document.getElementById('article-comment-list');
+            if (list && payload.commentHtml) {
+              var sortSelect = document.getElementById('comment-sort');
+              var activeSort = sortSelect ? sortSelect.value : 'relevant';
+              if (activeSort === 'oldest') {
+                list.insertAdjacentHTML('beforeend', payload.commentHtml);
+              } else {
+                list.insertAdjacentHTML('afterbegin', payload.commentHtml);
+              }
+            }
+            var emptyState = document.getElementById('article-empty-comments');
+            if (emptyState) {
+              emptyState.classList.add('is-hidden');
+            }
+            var commentCount = document.getElementById('article-comment-count');
+            if (commentCount) {
+              commentCount.textContent = payload.commentCount;
+            }
+            if (window.CKEDITOR && window.CKEDITOR.instances && window.CKEDITOR.instances.comment) {
+              window.CKEDITOR.instances.comment.setData('');
+            } else {
+              commentForm.reset();
+            }
+            if (commentStatus) {
+              commentStatus.textContent = 'Comment posted.';
+            }
+          }).catch(function(error) {
+            if (commentStatus) {
+              commentStatus.textContent = error.message || 'Could not post the comment.';
+              commentStatus.classList.add('is-error');
+            }
+          }).finally(function() {
+            setActionBusy(submitButton, false);
+          });
+        });
+      }
+
+      var sortSelect = document.getElementById('comment-sort');
+      if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+          var url = new URL(window.location.href);
+          url.searchParams.set('comment_sort', sortSelect.value);
+          window.location.href = url.toString();
+        });
+      }
+    })();
+  </script>
 {% include "footer.html" %}

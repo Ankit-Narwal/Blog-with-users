@@ -1,31 +1,29 @@
 {% include "header.html" %}
 
-  <header class="masthead" style="background-image: url('https://images.unsplash.com/photo-1516321165247-4aa89a48be28?auto=format&fit=crop&w=1400&q=80')">
-    <div class="overlay"></div>
+  <section class="plain-page-head dashboard-page-head">
     <div class="container">
       <div class="row">
         <div class="col-lg-10 col-md-11 mx-auto">
-          <div class="page-heading dashboard-hero">
-            <span class="home-kicker">Admin overview</span>
-            <h1>Dashboard</h1>
-            <p class="dashboard-hero-copy">
-              Track activity across posts, readers, and conversations from one place.
-            </p>
+          <div class="dashboard-title-row">
+            <div>
+              <span class="home-section-label">Admin overview</span>
+              <h1>Dashboard</h1>
+              <p>Track publishing, traffic, subscribers, and community engagement from one place.</p>
+            </div>
+            <div class="dashboard-actions dashboard-actions-head">
+              <a class="btn btn-primary" href="{{ url_for('add_new_post') }}"><i class="fas fa-plus" aria-hidden="true"></i> Create New Post</a>
+              <a class="btn btn-outline-primary dashboard-link-btn" href="{{ url_for('get_all_posts') }}">View Homepage</a>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </header>
+  </section>
 
   <section class="dashboard-band">
     <div class="container">
       <div class="row">
         <div class="col-lg-10 col-md-11 mx-auto">
-          <div class="dashboard-actions">
-            <a class="btn btn-primary" href="{{ url_for('add_new_post') }}">Create New Post</a>
-            <a class="btn btn-outline-secondary dashboard-link-btn" href="{{ url_for('get_all_posts') }}">View Homepage</a>
-          </div>
-
           <div class="row dashboard-stats-row">
             {% for stat in dashboard_stats %}
             <div class="col-lg-3 col-md-6 dashboard-stat-col">
@@ -36,6 +34,76 @@
               </section>
             </div>
             {% endfor %}
+          </div>
+
+          <div class="row dashboard-stats-row">
+            <div class="col-lg-4 dashboard-stat-col">
+              <section class="dashboard-panel dashboard-panel-tight">
+                <span class="dashboard-stat-label">Traffic</span>
+                {% if most_viewed_post %}
+                <a class="dashboard-item-title" href="{{ url_for('show_post', post_id=most_viewed_post.id) }}">{{ most_viewed_post.title }}</a>
+                <p class="dashboard-item-copy">{{ most_viewed_post.views }} views and still leading.</p>
+                {% else %}
+                <p class="dashboard-item-copy">No traffic data yet.</p>
+                {% endif %}
+              </section>
+            </div>
+            <div class="col-lg-4 dashboard-stat-col">
+              <section class="dashboard-panel dashboard-panel-tight">
+                <span class="dashboard-stat-label">Engagement</span>
+                <h2 class="dashboard-stat-value">{{ total_comments }}</h2>
+                <p class="dashboard-stat-detail">approved comments across the blog</p>
+                <p class="dashboard-item-meta">{{ traffic_value }}</p>
+              </section>
+            </div>
+            <div class="col-lg-4 dashboard-stat-col">
+              <section class="dashboard-panel dashboard-panel-tight">
+                <span class="dashboard-stat-label">Newsletter</span>
+                <h2 class="dashboard-stat-value">{{ newsletter_count }}</h2>
+                <p class="dashboard-stat-detail">weekly subscribers in the reader list</p>
+              </section>
+            </div>
+          </div>
+
+          <div class="row dashboard-stats-row">
+            <div class="col-lg-6 dashboard-stat-col">
+              <section class="dashboard-panel dashboard-chart-panel">
+                <span class="dashboard-stat-label">Analytics</span>
+                <h2 class="dashboard-panel-title">Top article views</h2>
+                <div class="dashboard-chart-list">
+                  {% for item in dashboard_charts.views %}
+                  <div class="dashboard-chart-row">
+                    <div class="dashboard-chart-head">
+                      <span>{{ item.label }}</span>
+                      <strong>{{ item.value }}</strong>
+                    </div>
+                    <div class="dashboard-chart-track">
+                      <span class="dashboard-chart-bar" style="width: {{ item.width }}%"></span>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </section>
+            </div>
+            <div class="col-lg-6 dashboard-stat-col">
+              <section class="dashboard-panel dashboard-chart-panel">
+                <span class="dashboard-stat-label">AI-assisted insight</span>
+                <h2 class="dashboard-panel-title">Engagement leaders</h2>
+                <div class="dashboard-chart-list">
+                  {% for item in dashboard_charts.engagement %}
+                  <div class="dashboard-chart-row">
+                    <div class="dashboard-chart-head">
+                      <span>{{ item.label }}</span>
+                      <strong>{{ item.value }}</strong>
+                    </div>
+                    <div class="dashboard-chart-track">
+                      <span class="dashboard-chart-bar dashboard-chart-bar-alt" style="width: {{ item.width }}%"></span>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </section>
+            </div>
           </div>
 
           <div class="row">
@@ -51,7 +119,7 @@
                 <article class="dashboard-list-item">
                   <div class="dashboard-list-main">
                     <a class="dashboard-item-title" href="{{ url_for('show_post', post_id=post.id) }}">{{ post.title }}</a>
-                    <p class="dashboard-item-meta">By {{ post.author.name }} on {{ post.date }}</p>
+                    <p class="dashboard-item-meta">By {{ post.author.name }} on {{ post.date }} &middot; {{ post.reading_time }} min read &middot; {{ post.views }} views</p>
                     {% if post.summary %}
                     <p class="dashboard-item-copy">{{ post.summary }}</p>
                     {% endif %}
@@ -75,13 +143,32 @@
               <section class="dashboard-panel dashboard-panel-tight">
                 <div class="dashboard-panel-head">
                   <div>
+                    <span class="home-section-label">Scheduled</span>
+                    <h2 class="dashboard-panel-title">Upcoming posts</h2>
+                  </div>
+                </div>
+                {% if scheduled_posts %}
+                  {% for post in scheduled_posts %}
+                  <article class="dashboard-comment-item">
+                    <a class="dashboard-item-title" href="{{ url_for('edit_post', post_id=post.id) }}">{{ post.title }}</a>
+                    <p class="dashboard-item-meta">Publishes {{ post.date }}</p>
+                  </article>
+                  {% endfor %}
+                {% else %}
+                <p class="dashboard-item-copy">No scheduled posts waiting in the queue.</p>
+                {% endif %}
+              </section>
+
+              <section class="dashboard-panel dashboard-panel-tight">
+                <div class="dashboard-panel-head">
+                  <div>
                     <span class="home-section-label">Community</span>
                     <h2 class="dashboard-panel-title">Recent comments</h2>
                   </div>
                 </div>
                 {% for comment in recent_comments %}
                 <article class="dashboard-comment-item">
-                  <p class="dashboard-comment-copy">{{ comment.text }}</p>
+                  <p class="dashboard-comment-copy">{{ comment.text | safe }}</p>
                   <p class="dashboard-item-meta">
                     {{ comment.author.name }} on
                     <a class="dashboard-inline-link" href="{{ url_for('show_post', post_id=comment.parent_post_id) }}">

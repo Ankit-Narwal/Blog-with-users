@@ -23,7 +23,7 @@
 
 </head>
 
-<body>
+<body class="{{ body_class|default('') }}" data-theme="{{ active_theme }}">
 
   <!-- Navigation -->
   <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
@@ -34,7 +34,22 @@
         <i class="fas fa-bars"></i>
       </button>
       <div class="collapse navbar-collapse" id="navbarResponsive">
+        <form id="nav-search-shell" class="nav-search" method="get" action="{{ url_for('get_all_posts') }}" autocomplete="off">
+          <input id="nav-search-input" class="nav-search-input" type="search" name="q" value="{{ search_query|default('') }}" placeholder="Search articles">
+          <button class="nav-search-btn" type="submit" aria-label="Search">
+            <i class="fas fa-search" aria-hidden="true"></i>
+          </button>
+          <div id="nav-search-suggestions" class="nav-search-suggestions is-hidden"></div>
+        </form>
         <ul class="navbar-nav ml-auto">
+          {% if current_user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('saved_articles') }}">Saved</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('profile') }}">Profile</a>
+          </li>
+          {% endif %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('get_all_posts') }}">Home</a>
           </li>
@@ -62,7 +77,115 @@
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('contact') }}">Contact</a>
           </li>
+          <li class="nav-item nav-theme-item">
+            <button class="nav-theme-toggle nav-search-toggle" id="search-toggle" type="button" aria-label="Search articles" title="Search articles">
+              <i class="fas fa-search" aria-hidden="true"></i>
+              <span class="sr-only">Search articles</span>
+            </button>
+          </li>
+          <li class="nav-item nav-theme-item">
+            <button class="nav-theme-toggle" id="theme-toggle" type="button" aria-label="Switch theme" title="Switch theme">
+              <i class="fas fa-moon" aria-hidden="true"></i>
+              <span class="sr-only">Switch theme</span>
+            </button>
+          </li>
         </ul>
       </div>
     </div>
   </nav>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-stack">
+      <div class="container">
+        {% for category, message in messages %}
+        <div class="flash-alert flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <script>
+    (function() {
+      var searchInput = document.getElementById('nav-search-input');
+      var suggestionBox = document.getElementById('nav-search-suggestions');
+      var searchShell = document.getElementById('nav-search-shell');
+      var searchToggle = document.getElementById('search-toggle');
+      if (!searchInput || !suggestionBox || !searchShell || !searchToggle) {
+        return;
+      }
+
+      var activeRequest = null;
+      function setSearchOpen(isOpen) {
+        searchShell.classList.toggle('is-open', !!isOpen);
+        if (isOpen) {
+          searchInput.focus();
+        } else {
+          hideSuggestions();
+        }
+      }
+      function hideSuggestions() {
+        suggestionBox.classList.add('is-hidden');
+        suggestionBox.innerHTML = '';
+      }
+
+      function renderSuggestions(items) {
+        if (!items || !items.length) {
+          hideSuggestions();
+          return;
+        }
+        suggestionBox.innerHTML = items.map(function(item) {
+          var safeTitle = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          var safeSubtitle = (item.subtitle || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return '<a class="nav-suggest-item" href="' + item.url + '"><strong>' + safeTitle + '</strong><span>' + safeSubtitle + '</span></a>';
+        }).join('');
+        suggestionBox.classList.remove('is-hidden');
+      }
+
+      searchInput.addEventListener('input', function() {
+        var query = searchInput.value.trim();
+        if (query.length < 2) {
+          hideSuggestions();
+          return;
+        }
+        if (activeRequest) {
+          activeRequest.abort();
+        }
+        activeRequest = new XMLHttpRequest();
+        activeRequest.open('GET', '{{ url_for("search_suggestions") }}?q=' + encodeURIComponent(query), true);
+        activeRequest.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        activeRequest.onreadystatechange = function() {
+          if (activeRequest.readyState !== 4) {
+            return;
+          }
+          if (activeRequest.status !== 200) {
+            hideSuggestions();
+            return;
+          }
+          try {
+            var payload = JSON.parse(activeRequest.responseText || '{}');
+            renderSuggestions(payload.items || []);
+          } catch (error) {
+            hideSuggestions();
+          }
+        };
+        activeRequest.send();
+      });
+
+      searchToggle.addEventListener('click', function() {
+        setSearchOpen(!searchShell.classList.contains('is-open'));
+      });
+
+      document.addEventListener('click', function(event) {
+        if (!event.target.closest('.nav-search') && !event.target.closest('.nav-search-toggle')) {
+          setSearchOpen(false);
+        }
+        if (!event.target.closest('.nav-search')) {
+          hideSuggestions();
+        }
+      });
+
+      searchInput.setAttribute('placeholder', 'Search articles');
+    })();
+  </script>

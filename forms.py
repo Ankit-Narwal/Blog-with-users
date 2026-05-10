@@ -1,20 +1,40 @@
+import re
+
 from flask_ckeditor import CKEditorField
+from flask_wtf.file import FileAllowed, FileField
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, EqualTo, Length, URL
+from wtforms import BooleanField, PasswordField, StringField, SubmitField, TextAreaField
+from wtforms.validators import DataRequired, EqualTo, Length, Optional, ValidationError
 
 
 class CreatePostForm(FlaskForm):
+    use_ai = BooleanField("Use AI writing tools")
     topic = StringField("Article Topic")
     title = StringField("Blog Post Title", validators=[DataRequired()])
     subtitle = StringField("Subtitle", validators=[DataRequired()])
-    img_url = StringField("Blog Image URL", validators=[DataRequired(), URL()])
+    scheduled_for = StringField("Schedule Publish Time", render_kw={"type": "datetime-local"})
+    img_url = StringField("Blog Image URL", validators=[Optional()])
+    cover_image = FileField(
+        "Upload Cover Image",
+        validators=[FileAllowed(["jpg", "jpeg", "png", "webp"], "Images only.")],
+    )
     body = CKEditorField("Blog Content", validators=[DataRequired()])
     summary = TextAreaField("AI Summary (TLDR)")
     tags = StringField("Suggested Tags")
     generate_draft = SubmitField("Write Full Draft from Topic")
     generate_ai = SubmitField("Generate Title, TLDR and Tags")
+    export_pdf = SubmitField("Download PDF Draft")
     submit = SubmitField("Submit Post")
+
+    def validate_img_url(self, field):
+        value = (field.data or "").strip()
+        if not value:
+            return
+        if value.startswith("/static/"):
+            return
+        if re.match(r"^https?://", value, re.IGNORECASE):
+            return
+        raise ValidationError("Use a valid image URL or upload an image file.")
 
 
 class RegisterForm(FlaskForm):

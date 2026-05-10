@@ -73,6 +73,14 @@
                   {{ error }}
                 </div>
                 {% endif %}
+                {% if google_oauth_enabled %}
+                <div class="auth-social-actions">
+                  <a class="btn btn-outline-secondary btn-block auth-google-btn" href="{{ url_for('google_auth_start') }}">
+                    <img src="{{ url_for('static', filename='img/google-g.svg') }}" alt="Google" class="google-g-icon">
+                    <span>Continue with Google</span>
+                  </a>
+                </div>
+                {% endif %}
                 <div class="auth-form-wrap">
                   {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}, action="/register") }}
                 </div>

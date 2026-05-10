@@ -1,0 +1,16 @@
+<article class="article-comment-card">
+  <div class="article-comment-avatar">
+    {% if x.author.profile_image %}
+    <img src="{{ x.author.profile_image }}" alt="{{ x.author_id }}">
+    {% else %}
+    <img src="{{ x.author_id | gravatar }}" alt="{{ x.author_id }}">
+    {% endif %}
+  </div>
+  <div class="article-comment-body">
+    <div class="article-comment-head">
+      <h3>{{ x.author_id }}</h3>
+      <span>{{ x.created_label }}</span>
+    </div>
+    <div class="article-comment-copy">{{ x.text | safe }}</div>
+  </div>
+</article>

@@ -3,3 +3,4 @@ server.out.log
 server.err.log
 __pycache__/
 *.pyc
+static/uploads/

@@ -26,14 +26,14 @@
     <div class="row">
       <div class="col-lg-8 col-md-10 mx-auto">
         <div class="auth-panel auth-form-panel">
-        <span class="home-section-label">AI writing tools</span>
+        <span class="home-section-label">Article studio</span>
         <h2 class="auth-panel-title">{% if is_edit %}Refine your post{% else %}Build your draft{% endif %}</h2>
         <p class="auth-panel-copy">
-          Enter a topic to have Gemini draft a full article, or fill the article yourself and use AI to generate the title,
-          TLDR, and tags before saving.
+          Write manually or switch on AI-powered Gemini tools when you want help with drafting, titles, TLDRs, and tags.
+          Cover images stay fully in your control through a URL or upload.
         </p>
         {% if ai_message %}
-        <div class="alert alert-info" role="alert">
+        <div class="alert alert-info auth-alert" role="alert">
           {{ ai_message }}
         </div>
         {% endif %}
@@ -47,11 +47,102 @@
         </script>
         {{ ckeditor.load() }}
         {{ ckeditor.config(name='body', versionCheck=false, removePlugins='versioncheck') }}
-        {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary", "generate_ai": "secondary", "generate_draft": "secondary"}) }}
+        <form method="post" enctype="multipart/form-data" novalidate class="article-editor-form">
+          {{ form.hidden_tag() }}
+
+          <div class="article-editor-toggle">
+            <label class="article-editor-check" for="{{ form.use_ai.id }}">
+              {{ form.use_ai(class="article-editor-checkbox") }}
+              <span>Use AI writing tools</span>
+            </label>
+          </div>
+
+          <div id="ai-tools-panel" class="article-editor-ai-panel{% if not form.use_ai.data %} is-hidden{% endif %}">
+            <span class="home-section-label">Gemini tools</span>
+            <p class="article-editor-helper">
+              Turn a topic into a full draft, or use AI on your current article to generate a better title, TLDR, and tags.
+            </p>
+            {{ wtf.form_field(form.topic) }}
+            <div class="article-editor-actions">
+              {{ form.generate_draft(class="btn btn-outline-primary article-editor-button") }}
+              {{ form.generate_ai(class="btn btn-outline-primary article-editor-button") }}
+            </div>
+          </div>
+
+          {{ wtf.form_field(form.title) }}
+          {{ wtf.form_field(form.subtitle) }}
+          {{ wtf.form_field(form.scheduled_for) }}
+          {{ wtf.form_field(form.img_url) }}
+          {{ wtf.form_field(form.cover_image) }}
+          {{ wtf.form_field(form.body) }}
+          {{ wtf.form_field(form.summary) }}
+          {{ wtf.form_field(form.tags) }}
+
+          <div class="article-editor-actions article-editor-actions-bottom">
+            {{ form.export_pdf(class="btn btn-outline-primary article-editor-button") }}
+            {{ form.submit(class="btn btn-primary article-editor-button") }}
+          </div>
+          <p class="article-inline-status article-ai-status" id="article-ai-status" aria-live="polite"></p>
+        </form>
         </div>
       </div>
     </div>
   </div>
+
+  <script>
+    (function() {
+      var toggle = document.getElementById('{{ form.use_ai.id }}');
+      var panel = document.getElementById('ai-tools-panel');
+      if (!toggle || !panel) {
+        return;
+      }
+
+      function syncPanel() {
+        panel.classList.toggle('is-hidden', !toggle.checked);
+      }
+
+      toggle.addEventListener('change', syncPanel);
+      syncPanel();
+
+      var form = document.querySelector('.article-editor-form');
+      var status = document.getElementById('article-ai-status');
+      var lastClickedButtonName = '';
+      if (form) {
+        var buttons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+        buttons.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            lastClickedButtonName = btn.getAttribute('name') || '';
+          });
+        });
+      }
+      if (form && status) {
+        form.addEventListener('submit', function(event) {
+          var submitter = event.submitter || document.activeElement;
+          var buttonName = submitter ? submitter.getAttribute('name') : '';
+          if (!buttonName) {
+            buttonName = lastClickedButtonName;
+          }
+          var aiNames = ['generate_draft', 'generate_ai', 'submit'];
+          if (aiNames.indexOf(buttonName) === -1) {
+            return;
+          }
+          var message = buttonName === 'generate_draft'
+            ? 'AI is generating your full article draft'
+            : buttonName === 'generate_ai'
+              ? 'AI is generating title, TLDR, and tags'
+              : 'AI is checking summary and tags before publish';
+          status.innerHTML = message + '<span class="typing-dots"><span></span><span></span><span></span></span>';
+          status.classList.remove('is-error');
+          status.style.display = 'block';
+          var allSubmitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+          allSubmitButtons.forEach(function(btn) {
+            btn.disabled = true;
+            btn.classList.add('is-loading');
+          });
+        });
+      }
+    })();
+  </script>
 
 {% include "footer.html" %}
 {% endblock %}

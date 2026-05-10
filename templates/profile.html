@@ -1,0 +1,124 @@
+{% include "header.html" %}
+
+  <section class="plain-page-head profile-page-head">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-11 mx-auto">
+          <span class="home-section-label">Your profile</span>
+          <h1>{{ profile_user.name }}</h1>
+          <p>Manage your public reader profile, saved reads, and commenting footprint.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dashboard-band">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 col-md-11 mx-auto">
+          <div class="row">
+            <div class="col-lg-5">
+              <section class="dashboard-panel profile-panel">
+                <div class="profile-identity">
+                  {% if profile_user.profile_image %}
+                  <img class="profile-avatar" src="{{ profile_user.profile_image }}" alt="{{ profile_user.name }}">
+                  {% else %}
+                  <img class="profile-avatar" src="{{ profile_user.email | gravatar }}" alt="{{ profile_user.name }}">
+                  {% endif %}
+                  <div>
+                    <h2 class="dashboard-panel-title">{{ profile_user.name }}</h2>
+                    <p class="dashboard-item-copy">Joined {{ profile_user.joined_date or 'Recently' }}</p>
+                  </div>
+                </div>
+
+                <form method="post" class="profile-form">
+                  <div class="form-group">
+                    <label>Profile Photo URL</label>
+                    <input class="form-control" type="text" name="profile_photo" value="{{ profile_user.profile_photo }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Bio</label>
+                    <textarea class="form-control" name="bio" rows="4">{{ profile_user.bio }}</textarea>
+                  </div>
+                  <div class="form-group">
+                    <label>GitHub</label>
+                    <input class="form-control" type="text" name="github_url" value="{{ profile_user.github_url }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Twitter / X</label>
+                    <input class="form-control" type="text" name="twitter_url" value="{{ profile_user.twitter_url }}">
+                  </div>
+                  <div class="form-group">
+                    <label>Website</label>
+                    <input class="form-control" type="text" name="website_url" value="{{ profile_user.website_url }}">
+                  </div>
+                  <button class="btn btn-primary" type="submit">Save Profile</button>
+                </form>
+              </section>
+            </div>
+
+            <div class="col-lg-7">
+              <section class="dashboard-panel">
+                <div class="dashboard-panel-head">
+                  <div>
+                    <span class="home-section-label">About</span>
+                    <h2 class="dashboard-panel-title">Bio and links</h2>
+                  </div>
+                </div>
+                <p class="dashboard-item-copy">{{ profile_user.bio or 'Add a short bio so readers know who is behind the comments and bookmarks.' }}</p>
+                <div class="home-tag-row profile-link-row">
+                  {% if profile_user.github_url %}<a class="home-tag" href="{{ profile_user.github_url }}">GitHub</a>{% endif %}
+                  {% if profile_user.twitter_url %}<a class="home-tag" href="{{ profile_user.twitter_url }}">Twitter</a>{% endif %}
+                  {% if profile_user.website_url %}<a class="home-tag" href="{{ profile_user.website_url }}">Website</a>{% endif %}
+                </div>
+              </section>
+
+              <section class="dashboard-panel">
+                <div class="dashboard-panel-head">
+                  <div>
+                    <span class="home-section-label">Saved</span>
+                    <h2 class="dashboard-panel-title">Saved articles</h2>
+                  </div>
+                </div>
+                {% if saved_posts %}
+                  {% for post in saved_posts %}
+                  <article class="dashboard-list-item">
+                    <div class="dashboard-list-main">
+                      <a class="dashboard-item-title" href="{{ url_for('show_post', post_id=post.id) }}">{{ post.title }}</a>
+                      <p class="dashboard-item-meta">{{ post.date }} &middot; {{ post.reading_time }} min read</p>
+                    </div>
+                  </article>
+                  {% endfor %}
+                {% else %}
+                <p class="dashboard-item-copy">No saved articles yet.</p>
+                {% endif %}
+              </section>
+
+              <section class="dashboard-panel">
+                <div class="dashboard-panel-head">
+                  <div>
+                    <span class="home-section-label">Comments</span>
+                    <h2 class="dashboard-panel-title">Authored comments</h2>
+                  </div>
+                </div>
+                {% if authored_comments %}
+                  {% for comment in authored_comments %}
+                  <article class="dashboard-comment-item">
+                    <p class="dashboard-comment-copy">{{ comment.text | safe }}</p>
+                    <p class="dashboard-item-meta">
+                      On <a class="dashboard-inline-link" href="{{ url_for('show_post', post_id=comment.parent_post_id) }}">{{ comment.parent_post.title }}</a>
+                    </p>
+                  </article>
+                  {% endfor %}
+                {% else %}
+                <p class="dashboard-item-copy">No approved comments yet.</p>
+                {% endif %}
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+{% include "footer.html" %}
