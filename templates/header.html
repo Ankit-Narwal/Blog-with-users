@@ -24,6 +24,15 @@
 </head>
 
 <body class="{{ body_class|default('') }}" data-theme="{{ active_theme }}">
+  <div class="page-skeleton" id="page-skeleton" aria-hidden="true">
+    <div class="skeleton-shell">
+      <div class="skeleton-line skeleton-line-wide"></div>
+      <div class="skeleton-line"></div>
+      <div class="skeleton-grid">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
 
   <!-- Navigation -->
   <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">

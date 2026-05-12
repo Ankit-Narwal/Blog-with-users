@@ -3,7 +3,7 @@
   <section class="plain-page-head profile-page-head">
     <div class="container">
       <div class="row">
-        <div class="col-lg-10 col-md-11 mx-auto">
+        <div class="col-lg-12 mx-auto">
           <span class="home-section-label">Your profile</span>
           <h1>{{ profile_user.name }}</h1>
           <p>Manage your public reader profile, saved reads, and commenting footprint.</p>
@@ -15,7 +15,7 @@
   <section class="dashboard-band">
     <div class="container">
       <div class="row">
-        <div class="col-lg-10 col-md-11 mx-auto">
+        <div class="col-lg-12 mx-auto">
           <div class="row">
             <div class="col-lg-5">
               <section class="dashboard-panel profile-panel">
@@ -98,7 +98,7 @@
                 <div class="dashboard-panel-head">
                   <div>
                     <span class="home-section-label">Comments</span>
-                    <h2 class="dashboard-panel-title">Authored comments</h2>
+                    <h2 class="dashboard-panel-title">Recent authored comments</h2>
                   </div>
                 </div>
                 {% if authored_comments %}
@@ -122,3 +122,4 @@
   </section>
 
 {% include "footer.html" %}
+

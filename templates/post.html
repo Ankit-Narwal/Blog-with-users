@@ -75,6 +75,24 @@
                       <span data-count="bookmark">{{ post.bookmark_count }}</span>
                     </button>
                   </form>
+                  <div class="article-share-actions" aria-label="Share and download article">
+                    <span class="article-share-label">Share</span>
+                    <a href="https://twitter.com/intent/tweet?url={{ request.url|urlencode }}&text={{ post.title|urlencode }}" target="_blank" rel="noopener" aria-label="Share on X" title="Share on X">
+                      <i class="fab fa-twitter" aria-hidden="true"></i>
+                    </a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url|urlencode }}" target="_blank" rel="noopener" aria-label="Share on Facebook" title="Share on Facebook">
+                      <i class="fab fa-facebook-f" aria-hidden="true"></i>
+                    </a>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.url|urlencode }}" target="_blank" rel="noopener" aria-label="Share on LinkedIn" title="Share on LinkedIn">
+                      <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+                    </a>
+                    <a href="https://api.whatsapp.com/send?text={{ (post.title ~ ' ' ~ request.url)|urlencode }}" target="_blank" rel="noopener" aria-label="Share on WhatsApp" title="Share on WhatsApp">
+                      <i class="fab fa-whatsapp" aria-hidden="true"></i>
+                    </a>
+                    <a href="{{ url_for('export_post_pdf', post_id=post.id) }}" aria-label="Download PDF" title="Download PDF">
+                      <i class="fas fa-file-pdf" aria-hidden="true"></i>
+                    </a>
+                  </div>
                 </div>
                 <p class="article-inline-status article-action-status" id="article-action-status" aria-live="polite"></p>
 
@@ -83,7 +101,6 @@
                 </div>
 
                 <div class="article-admin-actions">
-                  <a class="btn btn-outline-primary" href="{{ url_for('export_post_pdf', post_id=post.id) }}">Download PDF</a>
                   {% if is_admin_user %}
                   <a class="btn btn-primary" href="{{ url_for('edit_post', post_id=post.id) }}">Edit Post</a>
                   {% endif %}

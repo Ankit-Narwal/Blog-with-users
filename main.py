@@ -1609,7 +1609,13 @@ def profile():
         return redirect(url_for("profile"))
 
     saved_posts = [bookmark.post for bookmark in profile_user.bookmarks if bookmark.post and is_post_visible(bookmark.post, include_unpublished=is_admin_user(current_user))]
-    authored_comments = Comments.query.filter_by(author_id=profile_user.name, status="approved").order_by(Comments.id.desc()).all()
+    authored_comments = (
+        Comments.query
+        .filter_by(author_id=profile_user.name, status="approved")
+        .order_by(Comments.id.desc())
+        .limit(10)
+        .all()
+    )
     return render_template(
         "profile.html",
         profile_user=profile_user,
@@ -1696,11 +1702,32 @@ def admin_dashboard():
             for post in top_engaged_posts
         ],
     }
+    dashboard_progress = [
+        {
+            "label": "Published",
+            "value": len(visible),
+            "detail": "visible posts",
+            "percent": min(100, int((len(visible) / max(1, total_posts)) * 100)),
+        },
+        {
+            "label": "Tagged",
+            "value": tagged_posts,
+            "detail": "organized posts",
+            "percent": min(100, int((tagged_posts / max(1, total_posts)) * 100)),
+        },
+        {
+            "label": "Response",
+            "value": engagement_total,
+            "detail": "actions vs traffic",
+            "percent": min(100, int((engagement_total / max(1, total_views)) * 100)),
+        },
+    ]
 
     return render_template(
         "dashboard.html",
         dashboard_stats=dashboard_stats,
         dashboard_charts=dashboard_charts,
+        dashboard_progress=dashboard_progress,
         recent_posts=recent_posts,
         recent_comments=recent_comments,
         newest_users=newest_users,
